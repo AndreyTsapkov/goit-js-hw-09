@@ -2,6 +2,8 @@
 import flatpickr from 'flatpickr';
 // Дополнительный импорт стилей
 import 'flatpickr/dist/flatpickr.min.css';
+// Библиотека алертов, варнингов и так далее
+import { Notify } from 'notiflix/build/notiflix-notify-aio';
 
 //--------------Опции для flatpickr---------------------
 //-enableTime - включает возможность выбора времени
@@ -24,10 +26,12 @@ const options = {
   onClose(selectedDates) {
     // console.log(selectedDates);
     if (selectedDates[0].getTime() <= options.defaultDate.getTime()) {
-      window.alert('Please choose a date in the future');
+      Notify.failure('Please choose a date in the future');
       return;
     }
+    timerNumbers(selectedDates);
     refs.buttonStart.disabled = false;
+    userSelectedDateMs = selectedDates[0].getTime();
   },
 };
 
@@ -40,10 +44,56 @@ const refs = {
   spanMinutes: document.querySelector('[data-minutes]'),
   spanSeconds: document.querySelector('[data-seconds]'),
 };
+//Дата, выбранная пользователем, в милисекундах с 01.01.1970
+let userSelectedDateMs = 0;
 
 //Кнопка "Старт" не активна, пока не выбрана валидная дата
 refs.buttonStart.disabled = true;
-
+let blue;
+let brown;
 flatpickr(refs.inputDate, options);
 
-function addLeadingZero(value) {}
+refs.buttonStart.addEventListener('click', startTimer);
+
+function timerNumbers(selectedDates) {
+  const currentDate = Date.now();
+  blue = selectedDates[0].getTime() - currentDate;
+}
+
+function updateTimerNumbers({ days, hours, minutes, seconds }) {
+  refs.spanDays.textContent = days;
+  refs.spanHours.textContent = hours;
+  refs.spanMinutes.textContent = minutes;
+  refs.spanSeconds.textContent = seconds;
+}
+function startTimer() {
+  let value = 0;
+  setInterval(() => {
+    brown = convertMs(blue);
+    updateTimerNumbers(brown);
+    blue = blue - 1000;
+  }, 1000);
+}
+// Функция добавляет 0 перед цифрой, если цифра одна
+function addLeadingZero(value) {
+  return String(value).padStart(2, '0');
+}
+
+function convertMs(ms) {
+  // Number of milliseconds per unit of time
+  const second = 1000;
+  const minute = second * 60;
+  const hour = minute * 60;
+  const day = hour * 24;
+
+  // Remaining days
+  const days = addLeadingZero(Math.floor(ms / day));
+  // Remaining hours
+  const hours = addLeadingZero(Math.floor((ms % day) / hour));
+  // Remaining minutes
+  const minutes = addLeadingZero(Math.floor(((ms % day) % hour) / minute));
+  // Remaining seconds
+  const seconds = addLeadingZero(Math.floor((((ms % day) % hour) % minute) / second));
+
+  return { days, hours, minutes, seconds };
+}
