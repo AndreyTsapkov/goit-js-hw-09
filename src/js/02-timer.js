@@ -48,10 +48,36 @@ const refs = {
 let userSelectedDateMs = 0;
 
 //Кнопка "Старт" не активна, пока не выбрана валидная дата
+//Выбор даты активен, пока не стартанул таймер
 refs.buttonStart.disabled = true;
+refs.inputDate.disabled = false;
 let blue;
 let brown;
 flatpickr(refs.inputDate, options);
+
+class Timer {
+  constructor({ updateCountdown, buttonStartStatus, inputDateStatus }) {
+    this.countdownTime = 0;
+    this.timerID = 0;
+    this.updateCountdown = updateCountdown;
+    this.buttonStart = buttonStartStatus;
+    this.inputDate = inputDateStatus;
+  }
+
+  updateCountdown({ days, hours, minutes, seconds }) {
+    refs.spanDays.textContent = days;
+    refs.spanHours.textContent = hours;
+    refs.spanMinutes.textContent = minutes;
+    refs.spanSeconds.textContent = seconds;
+  }
+
+  buttonStartStatus(status) {
+    refs.buttonStart.disabled = status;
+  }
+  inputDateStatus(status) {
+    refs.inputDate.disabled = status;
+  }
+}
 
 refs.buttonStart.addEventListener('click', startTimer);
 
@@ -60,17 +86,11 @@ function timerNumbers(selectedDates) {
   blue = selectedDates[0].getTime() - currentDate;
 }
 
-function updateTimerNumbers({ days, hours, minutes, seconds }) {
-  refs.spanDays.textContent = days;
-  refs.spanHours.textContent = hours;
-  refs.spanMinutes.textContent = minutes;
-  refs.spanSeconds.textContent = seconds;
-}
 function startTimer() {
   let value = 0;
   setInterval(() => {
     brown = convertMs(blue);
-    updateTimerNumbers(brown);
+    updateCountdown(brown);
     blue = blue - 1000;
   }, 1000);
 }
