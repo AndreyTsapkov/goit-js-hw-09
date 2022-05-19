@@ -1,7 +1,5 @@
 // Описан в документации
 import flatpickr from 'flatpickr';
-// Дополнительный импорт стилей
-import 'flatpickr/dist/flatpickr.min.css';
 // Библиотека алертов, варнингов и так далее
 import { Notify } from 'notiflix/build/notiflix-notify-aio';
 
@@ -25,13 +23,15 @@ const options = {
   minuteIncrement: 1,
   onClose(selectedDates) {
     // console.log(selectedDates);
+    //Если дата из прошлого, выдаём алерт
     if (selectedDates[0].getTime() <= options.defaultDate.getTime()) {
       Notify.failure('Please choose a date in the future');
       return;
     }
+    //Считаем дату и отдаём в объект
     timer.timerNumbers(selectedDates);
+    //Включаем кнопку "Старт"
     refs.buttonStart.disabled = false;
-    userSelectedDateMs = selectedDates[0].getTime();
   },
 };
 
@@ -44,22 +44,13 @@ const refs = {
   spanMinutes: document.querySelector('[data-minutes]'),
   spanSeconds: document.querySelector('[data-seconds]'),
 };
-//Дата, выбранная пользователем, в милисекундах с 01.01.1970
-let userSelectedDateMs = 0;
-
-//Кнопка "Старт" не активна, пока не выбрана валидная дата
-//Выбор даты активен, пока не стартанул таймер
 
 class Timer {
-  //{ updateCountdown, buttonStartStatus, inputDateStatus }
   constructor() {
     this.countdownTime = 0;
     this.timerID = null;
-    // this.updateCountdown = updateCountdown;
-    // this.buttonStart = buttonStartStatus;
-    // this.inputDate = inputDateStatus;
   }
-
+  //Обновление чисел таймера
   updateCountdown({ days, hours, minutes, seconds }) {
     refs.spanDays.textContent = days;
     refs.spanHours.textContent = hours;
@@ -76,7 +67,7 @@ class Timer {
   buttonStopStatus(status) {
     refs.buttonStop.disabled = status;
   }
-
+  //Старт таймера, выключение кнопки "Старт" и выбора даты, включение кнопки "Стоп"
   startTimer() {
     this.timerID = setInterval(() => {
       if (this.countdownTime < 0) {
@@ -89,14 +80,14 @@ class Timer {
     this.inputDateStatus(true);
     this.buttonStopStatus(false);
   }
-
+  //Стопаем и очищаем таймер, включаем выбор даты, выключаем кнопку "Стоп"
   stopAndClearTimer() {
     clearInterval(this.timerID);
     this.updateCountdown(this.convertMs(0));
     this.inputDateStatus(false);
     this.buttonStopStatus(true);
   }
-
+  //Функция рассчитывает, сколько считать таймеру :D
   timerNumbers(selectedDates) {
     const currentDate = Date.now();
     this.countdownTime = selectedDates[0].getTime() - currentDate;
@@ -126,10 +117,15 @@ class Timer {
     return String(value).padStart(2, '0');
   }
 }
+//Кнопка "Старт" не активна, пока не выбрана валидная дата
+//Кнопка "Стоп" не активна, пока таймер не запустился
+//Выбор даты активен, пока не стартанул таймер
 refs.buttonStart.disabled = true;
 refs.buttonStop.disabled = true;
 refs.inputDate.disabled = false;
+//Инициализация библиотеки с датами
 flatpickr(refs.inputDate, options);
+
 const timer = new Timer();
 
 refs.buttonStart.addEventListener('click', () => timer.startTimer());
