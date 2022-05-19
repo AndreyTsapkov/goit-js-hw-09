@@ -29,7 +29,7 @@ const options = {
       Notify.failure('Please choose a date in the future');
       return;
     }
-    timerNumbers(selectedDates);
+    timer.timerNumbers(selectedDates);
     refs.buttonStart.disabled = false;
     userSelectedDateMs = selectedDates[0].getTime();
   },
@@ -38,7 +38,7 @@ const options = {
 const refs = {
   inputDate: document.querySelector('#datetime-picker'),
   buttonStart: document.querySelector('[data-start]'),
-  timer: document.querySelector('.timer'),
+  buttonStop: document.querySelector('[data-stop]'),
   spanDays: document.querySelector('[data-days]'),
   spanHours: document.querySelector('[data-hours]'),
   spanMinutes: document.querySelector('[data-minutes]'),
@@ -49,19 +49,15 @@ let userSelectedDateMs = 0;
 
 //Кнопка "Старт" не активна, пока не выбрана валидная дата
 //Выбор даты активен, пока не стартанул таймер
-refs.buttonStart.disabled = true;
-refs.inputDate.disabled = false;
-let blue;
-let brown;
-flatpickr(refs.inputDate, options);
 
 class Timer {
-  constructor({ updateCountdown, buttonStartStatus, inputDateStatus }) {
+  //{ updateCountdown, buttonStartStatus, inputDateStatus }
+  constructor() {
     this.countdownTime = 0;
-    this.timerID = 0;
-    this.updateCountdown = updateCountdown;
-    this.buttonStart = buttonStartStatus;
-    this.inputDate = inputDateStatus;
+    this.timerID = null;
+    // this.updateCountdown = updateCountdown;
+    // this.buttonStart = buttonStartStatus;
+    // this.inputDate = inputDateStatus;
   }
 
   updateCountdown({ days, hours, minutes, seconds }) {
@@ -77,43 +73,64 @@ class Timer {
   inputDateStatus(status) {
     refs.inputDate.disabled = status;
   }
+  buttonStopStatus(status) {
+    refs.buttonStop.disabled = status;
+  }
+
+  startTimer() {
+    this.timerID = setInterval(() => {
+      if (this.countdownTime < 0) {
+        return clearInterval(this.timerID);
+      }
+      this.updateCountdown(this.convertMs(this.countdownTime));
+      this.countdownTime = this.countdownTime - 1000;
+    }, 1000);
+    this.buttonStartStatus(true);
+    this.inputDateStatus(true);
+    this.buttonStopStatus(false);
+  }
+
+  stopAndClearTimer() {
+    clearInterval(this.timerID);
+    this.updateCountdown(this.convertMs(0));
+    this.inputDateStatus(false);
+    this.buttonStopStatus(true);
+  }
+
+  timerNumbers(selectedDates) {
+    const currentDate = Date.now();
+    this.countdownTime = selectedDates[0].getTime() - currentDate;
+  }
+
+  convertMs(ms) {
+    // Number of milliseconds per unit of time
+    const second = 1000;
+    const minute = second * 60;
+    const hour = minute * 60;
+    const day = hour * 24;
+
+    // Remaining days
+    const days = this.addLeadingZero(Math.floor(ms / day));
+    // Remaining hours
+    const hours = this.addLeadingZero(Math.floor((ms % day) / hour));
+    // Remaining minutes
+    const minutes = this.addLeadingZero(Math.floor(((ms % day) % hour) / minute));
+    // Remaining seconds
+    const seconds = this.addLeadingZero(Math.floor((((ms % day) % hour) % minute) / second));
+
+    return { days, hours, minutes, seconds };
+  }
+
+  // Функция добавляет 0 перед цифрой, если цифра одна
+  addLeadingZero(value) {
+    return String(value).padStart(2, '0');
+  }
 }
+refs.buttonStart.disabled = true;
+refs.buttonStop.disabled = true;
+refs.inputDate.disabled = false;
+flatpickr(refs.inputDate, options);
+const timer = new Timer();
 
-refs.buttonStart.addEventListener('click', startTimer);
-
-function timerNumbers(selectedDates) {
-  const currentDate = Date.now();
-  blue = selectedDates[0].getTime() - currentDate;
-}
-
-function startTimer() {
-  let value = 0;
-  setInterval(() => {
-    brown = convertMs(blue);
-    updateCountdown(brown);
-    blue = blue - 1000;
-  }, 1000);
-}
-// Функция добавляет 0 перед цифрой, если цифра одна
-function addLeadingZero(value) {
-  return String(value).padStart(2, '0');
-}
-
-function convertMs(ms) {
-  // Number of milliseconds per unit of time
-  const second = 1000;
-  const minute = second * 60;
-  const hour = minute * 60;
-  const day = hour * 24;
-
-  // Remaining days
-  const days = addLeadingZero(Math.floor(ms / day));
-  // Remaining hours
-  const hours = addLeadingZero(Math.floor((ms % day) / hour));
-  // Remaining minutes
-  const minutes = addLeadingZero(Math.floor(((ms % day) % hour) / minute));
-  // Remaining seconds
-  const seconds = addLeadingZero(Math.floor((((ms % day) % hour) % minute) / second));
-
-  return { days, hours, minutes, seconds };
-}
+refs.buttonStart.addEventListener('click', () => timer.startTimer());
+refs.buttonStop.addEventListener('click', () => timer.stopAndClearTimer());
