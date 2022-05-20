@@ -1,5 +1,7 @@
 // Описан в документации
 import flatpickr from 'flatpickr';
+// Дополнительный импорт стилей
+import 'flatpickr/dist/flatpickr.min.css';
 // Библиотека алертов, варнингов и так далее
 import { Notify } from 'notiflix/build/notiflix-notify-aio';
 
@@ -123,7 +125,7 @@ class Timer {
 refs.buttonStart.disabled = true;
 refs.buttonStop.disabled = true;
 refs.inputDate.disabled = false;
-//Инициализация библиотеки с датами
+// Инициализация библиотеки с датами
 flatpickr(refs.inputDate, options);
 
 const timer = new Timer();
