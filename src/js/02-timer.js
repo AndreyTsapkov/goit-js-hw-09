@@ -24,6 +24,7 @@ const options = {
   defaultDate: new Date(),
   minuteIncrement: 1,
   onClose(selectedDates) {
+    console.log(this);
     // console.log(selectedDates);
     //Если дата из прошлого, выдаём алерт
     if (selectedDates[0].getTime() <= options.defaultDate.getTime()) {
